@@ -1,18 +1,8 @@
-// make.fun's reference VM for its tiny stack ISA (ISA.md beside this file): the one the generator runs every drawn
-// program on to record its expected output and exit code. Pure: it reads nothing but its arguments.
-//
-//   run(program, input) => { stdout: Uint8Array, exit: number, trap: number | null, steps: number }
-//
-// Every rule below is ISA.md's, in the order ISA.md states it; a change here is a change to the ISA.
-
-/** The machine's bounds (ISA.md "The machine"). */
 export const STACK_MAX = 256;
 export const CALLS_MAX = 64;
 export const MEMORY_WORDS = 256;
 export const STEP_LIMIT = 1_000_000;
 export const OUTPUT_MAX = 65_536;
-
-/** The trap codes (ISA.md "Traps"): the exit code of a program that traps. */
 export const TRAP = Object.freeze({
   UNDERFLOW: 2,
   OVERFLOW: 3,
@@ -25,8 +15,6 @@ export const TRAP = Object.freeze({
   STEPS: 10,
   OUTPUT: 11,
 });
-
-/** Every opcode: its byte, its name, the bytes of its immediate, what it pops and what it pushes. */
 export const OPS = Object.freeze([
   [0x00, 'HALT', 0, 0, 0],
   [0x01, 'PUSH8', 1, 0, 1],
@@ -66,15 +54,9 @@ export const OPS = Object.freeze([
   [0x52, 'IN', 0, 0, 1],
   [0x53, 'EXIT', 0, 1, 0],
 ]);
-
-/** Opcode byte to [byte, name, immediate bytes, pops, pushes]. */
 export const OP_BY_BYTE = new Map(OPS.map((o) => [o[0], o]));
-/** Opcode name to its byte. */
 export const OP_BYTE = Object.freeze(Object.fromEntries(OPS.map((o) => [o[1], o[0]])));
-
 const enc = new TextEncoder();
-
-/** Runs `program` (bytes) on `input` (bytes) to its end: what it wrote, its exit code and its trap (null when it exited). */
 export function run(program, input) {
   const n = program.length;
   const D = new Int32Array(STACK_MAX);
@@ -89,7 +71,6 @@ export function run(program, input) {
   let steps = 0;
   const done = (exit, trap) => ({ stdout: out.slice(0, olen), exit, trap, steps });
   const trap = (code) => done(code, code);
-
   for (;;) {
     if (steps === STEP_LIMIT) return trap(TRAP.STEPS);
     if (pc < 0 || pc >= n) return trap(TRAP.PC);
@@ -273,11 +254,8 @@ export function run(program, input) {
     }
   }
 }
-
-
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-
 const I = process.env.MAKEFUN_INPUT_DIR ?? "/input";
 const O = process.env.MAKEFUN_OUTPUT_DIR ?? "/output";
 for (const id of readdirSync(I).sort()) {
